@@ -31,6 +31,7 @@ typedef struct {
 /* Functions declaration */
 void graph_new(Graph **G);
 void graph_print(Graph *G);
+void graph_print_gv(Graph *G);
 void graph_add_vertex(Graph *G, Vertex *v);
 void graph_rm_vertex(Graph *G, Vertex *v);
 void graph_destroy(Graph *G);
@@ -76,23 +77,53 @@ void graph_destroy(Graph *G) {
 	free(G);
 }
 
-/* TODO: make this function generic (data type independent) */
+/* TODO: make print functions generic (data type independent) */
 void graph_print(Graph *G) {
-	int *x;
+	int x;
 	size_t i, j;
 	Vertex *v;
+
+	puts("strict graph G {");
 
 	for(i = 0; i < G->vertices_no; i++) {
 		v = G->vertices[i];
 		vertex_get_value(v, &x);
-		printf("%d%s", x, v->edges_no ? " -> " : "\n");
+		printf("    %d%s", x, v->edges_no ? " -- " : "\n");
 
-		for(j = 0; j < v->edges_no; j++) {
+		for(j = 0, printf("{"); j < v->edges_no; j++) {
 			vertex_get_value(v->edges[j], &x);
-			printf("%d%s", x, (j < (v->edges_no - 1)) ? " -> " : "");
+			printf("%d%s", x, (j < (v->edges_no - 1)) ? ", " : "}");
 		}
 		printf("\n");
 	}
+	puts("}");
+}
+
+void graph_print_gv(Graph *G) {
+	int x;
+	size_t i, j;
+	Vertex *v;
+
+	puts("strict graph G {\n"
+		"    rankdir=RL;\n"
+		"    node [ shape=circle,\n"
+			"            penwidth=2.0, \n"
+			"            fontname=\"DejaVu Sans Mono\", \n"
+			"            fontsize=20.0 ]\n"
+		"    edge [ penwidth=2.0 ]\n");
+
+	for(i = 0; i < G->vertices_no; i++) {
+		v = G->vertices[i];
+		vertex_get_value(v, &x);
+		printf("    %d%s", x, v->edges_no ? " -- " : "\n");
+
+		for(j = 0, printf("{"); j < v->edges_no; j++) {
+			vertex_get_value(v->edges[j], &x);
+			printf("%d%s", x, (j < (v->edges_no - 1)) ? ", " : "}");
+		}
+		printf("\n");
+	}
+	puts("}");
 }
 
 void vertex_new(Vertex **x, Vertex_getter getter, Vertex_setter setter) {
@@ -154,7 +185,7 @@ int main (void) {
 
 	graph_new(&graph);
 
-	int x, res;
+	int x;
 	size_t i;
 
 	for(i = 0, x = 1; i < 6; i++, x++) {
@@ -183,8 +214,7 @@ int main (void) {
 
 	vertex_add_edge(graph->vertices[5], graph->vertices[3]);
 
-	graph_print(graph);
-
+	graph_print_gv(graph);
 	graph_destroy(graph);
 	return 0;
 }
