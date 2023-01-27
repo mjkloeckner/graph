@@ -35,7 +35,7 @@ of the graph when parsed with
 
 ## Generating a preview of the graph
 
-First make sure you have [graphiz](https://graphviz.org/) package installed,
+First make sure you have [graphviz](https://graphviz.org/) package installed,
 then just pipe the output of the program to `dot`:
 
 ```shell
