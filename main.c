@@ -47,7 +47,7 @@ bool vertex_is_adjacent(Vertex *x, Vertex *y);
 
 /* Functions definition */
 void graph_new(Graph **G) {
-	(*G) = malloc(sizeof(G));
+	(*G) = malloc(sizeof(Graph));
 	(*G)->vertices_no = 0;
 	(*G)->vertices = NULL;
 }
@@ -69,10 +69,10 @@ void graph_add_vertex(Graph *G, Vertex *v) {
 }
 
 void graph_destroy(Graph *G) {
-	if(G->vertices_no)
-		for(size_t i = 0; i < G->vertices_no; i++)
-			vertex_destroy(G->vertices[i]);
+	for(size_t i = 0; i < G->vertices_no; i++)
+		vertex_destroy(G->vertices[i]);
 
+	free(G->vertices);
 	free(G);
 }
 
@@ -98,6 +98,7 @@ void graph_print(Graph *G) {
 void vertex_new(Vertex **x, Vertex_getter getter, Vertex_setter setter) {
 	(*x) = malloc(sizeof(Vertex));
 	(*x)->edges_no = 0;
+	(*x)->edges_alloc = 0;
 	(*x)->vertex_getter = getter;
 	(*x)->vertex_setter = setter;
 	(*x)->data = NULL;
@@ -107,6 +108,7 @@ void vertex_new(Vertex **x, Vertex_getter getter, Vertex_setter setter) {
 /* does not destroy adjacent vertices nor edges */
 void vertex_destroy(Vertex *x) {
 	free(x->data);
+	free(x->edges);
 	free(x);
 }
 
