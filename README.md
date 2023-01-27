@@ -1,5 +1,5 @@
 # Graph implementation in C
-![file](https://user-images.githubusercontent.com/64109770/215198850-a040ab3a-f98e-4a5f-967c-06ed64e819cd.png)
+![example-output](https://user-images.githubusercontent.com/64109770/215203106-649a479e-c757-42c0-9acd-9bb4f719ab6c.png)
 
 Simple graph data structure implementation in C using adjacency list. Featuring
 graph output to stdout formatted in 
