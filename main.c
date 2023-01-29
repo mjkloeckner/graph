@@ -17,6 +17,7 @@ typedef void (*Vertex_setter)(Vertex *x, void *data);
 struct Vertex {
 	unsigned int edges_no, edges_alloc;
 	void *data;
+	bool visited;
 	Vertex_getter vertex_getter;
 	Vertex_setter vertex_setter;
 	Vertex **edges;
@@ -32,6 +33,7 @@ typedef struct {
 void graph_new(Graph **G);
 void graph_print(Graph *G);
 void graph_print_gv(Graph *G);
+void graph_dfs(Graph *G, Vertex *v);
 void graph_add_vertex(Graph *G, Vertex *v);
 void graph_rm_vertex(Graph *G, Vertex *v);
 void graph_destroy(Graph *G);
@@ -55,11 +57,10 @@ void graph_new(Graph **G) {
 
 void graph_add_vertex(Graph *G, Vertex *v) {
 	/* add memory if needed */
-	if(G->vertices == NULL) {
+	if (G->vertices == NULL) {
 		G->vertices_alloc = GRAPH_INITIAL_ALLOC;
 		G->vertices = malloc(sizeof(Vertex *) * GRAPH_INITIAL_ALLOC);
 	}
-
 	else if (G->vertices_alloc == G->vertices_no) {
 		G->vertices_alloc = G->vertices_alloc * GRAPH_GROWTH_FACTOR;
 		G->vertices = realloc(G->vertices,
@@ -126,10 +127,48 @@ void graph_print_gv(Graph *G) {
 	puts("}");
 }
 
+/* non-recursive Depth-First Search */
+/* TODO: implement a stack data structure */
+void graph_dfs(Graph *G, Vertex *v) {
+    /* let S be a stack */
+	Vertex **S = calloc(100, sizeof(Vertex *));
+	size_t i = 0;
+	int x;
+
+    /* S.push(v) */
+	S[i++] = v;
+
+    /* while S is not empty do */
+    while(i) {
+        /* v = S.pop() */
+		S[i] = NULL;
+        v = S[--i];
+
+        /* if v is not labeled as discovered then */
+        if (!v->visited) {
+            /* label v as discovered */
+			v->visited = true;
+
+			vertex_get_value(v, &x);
+			printf("%d -> ", x);
+
+            /* for all edges from v to w in G.adjacentEdges(v) do */
+            for(size_t j = 0; j < v->edges_no; j++) {
+				/* S.push(w) */
+				S[i++] = v->edges[j];
+				vertex_get_value(v->edges[j], &x);
+				printf("%d%s", x, (j < (v->edges_no - 1)) ? " -> " : "");
+			}
+			printf("\n");
+		}
+	}
+}
+
 void vertex_new(Vertex **x, Vertex_getter getter, Vertex_setter setter) {
 	(*x) = malloc(sizeof(Vertex));
 	(*x)->edges_no = 0;
 	(*x)->edges_alloc = 0;
+	(*x)->visited = false;
 	(*x)->vertex_getter = getter;
 	(*x)->vertex_setter = setter;
 	(*x)->data = NULL;
@@ -144,17 +183,15 @@ void vertex_destroy(Vertex *x) {
 }
 
 void vertex_add_edge(Vertex *x, Vertex *edge) {
-	if(x->edges == NULL)
+	if (x->edges == NULL)
 		x->edges = malloc(sizeof(Vertex) * VERTEX_EDGES_INITIAL_SIZE);
 
-	else if(x->edges_no == x->edges_alloc)
+	else if (x->edges_no == x->edges_alloc)
 		x->edges = realloc(x->edges,
 				x->edges_alloc + (1 * VERTEX_EDGES_GROWTH_FACTOR));
 
 	x->edges[x->edges_no++] = edge;
 }
-
-void vertex_rm_edge(Vertex *x, Vertex *edge);
 
 void vertex_get_value(Vertex *x, void *data) {
 	x->vertex_getter(x, data);
@@ -163,9 +200,6 @@ void vertex_get_value(Vertex *x, void *data) {
 void vertex_set_value(Vertex *x, void *data) {
 	x->vertex_setter(x, data);
 }
-
-void vertex_list_adjacents(Vertex *x);
-bool vertex_is_adjacent(Vertex *x, Vertex *y);
 
 /* type specific functions */
 void vertex_getter(Vertex *x, void *data) {
@@ -214,7 +248,7 @@ int main (void) {
 
 	vertex_add_edge(graph->vertices[5], graph->vertices[3]);
 
-	graph_print_gv(graph);
+	graph_dfs(graph, graph->vertices[0]);
 	graph_destroy(graph);
 	return 0;
 }
