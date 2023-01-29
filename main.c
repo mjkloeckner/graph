@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "stack.h"
+
 #define GRAPH_INITIAL_ALLOC 5
 #define GRAPH_GROWTH_FACTOR 2
 
@@ -11,8 +13,8 @@
 #define VERTEX_EDGES_GROWTH_FACTOR 1
 
 typedef struct Vertex Vertex;
-typedef void (*Vertex_getter)(Vertex *x, void *data);
-typedef void (*Vertex_setter)(Vertex *x, void *data);
+typedef void (*Vertex_getter)(const Vertex *x, void *data);
+typedef void (*Vertex_setter)(Vertex *x, const void *data);
 
 struct Vertex {
 	unsigned int edges_no, edges_alloc;
@@ -31,19 +33,20 @@ typedef struct {
 
 /* Functions declaration */
 void graph_new(Graph **G);
-void graph_print(Graph *G);
-void graph_print_gv(Graph *G);
-void graph_dfs(Graph *G, Vertex *v);
+void graph_print(const Graph *G);
+void graph_print_gv(const Graph *G);
+void graph_dfs(const Graph *G, const Vertex *v);
 void graph_add_vertex(Graph *G, Vertex *v);
 void graph_rm_vertex(Graph *G, Vertex *v);
 void graph_destroy(Graph *G);
 
-void vertex_new(Vertex **x, Vertex_getter getter, Vertex_setter setter);
+void vertex_new(Vertex **x, const Vertex_getter getter,
+		const Vertex_setter setter);
 void vertex_destroy(Vertex *x);
 void vertex_add_edge(Vertex *x, Vertex *edge);
 void vertex_rm_edge(Vertex *x, Vertex *edge);
-void vertex_get_value(Vertex *x, void *data);
-void vertex_set_value(Vertex *x, void *data);
+void vertex_get_value(const Vertex *x, void *data);
+void vertex_set_value(Vertex *x, const void *data);
 void vertex_get_adjacents(Vertex *x);
 bool vertex_is_adjacent(Vertex *x, Vertex *y);
 
@@ -79,7 +82,7 @@ void graph_destroy(Graph *G) {
 }
 
 /* TODO: make print functions generic (data type independent) */
-void graph_print(Graph *G) {
+void graph_print(const Graph *G) {
 	int x;
 	size_t i, j;
 	Vertex *v;
@@ -100,7 +103,7 @@ void graph_print(Graph *G) {
 	puts("}");
 }
 
-void graph_print_gv(Graph *G) {
+void graph_print_gv(const Graph *G) {
 	int x;
 	size_t i, j;
 	Vertex *v;
@@ -129,42 +132,37 @@ void graph_print_gv(Graph *G) {
 
 /* non-recursive Depth-First Search */
 /* TODO: implement a stack data structure */
-void graph_dfs(Graph *G, Vertex *v) {
+void graph_dfs(const Graph *G, const Vertex *v) {
     /* let S be a stack */
-	Vertex **S = calloc(100, sizeof(Vertex *));
-	size_t i = 0;
+	/* Vertex **S = calloc(100, sizeof(Vertex *)); */
+	Stack *S;
+	Vertex *aux;
 	int x;
 
-    /* S.push(v) */
-	S[i++] = v;
+    stack_new(&S, sizeof(Vertex *));
+	stack_push(S, &v);
 
-    /* while S is not empty do */
-    while(i) {
-        /* v = S.pop() */
-		S[i] = NULL;
-        v = S[--i];
+    while(S->len) {
+		stack_pop(S, &aux);
 
-        /* if v is not labeled as discovered then */
-        if (!v->visited) {
-            /* label v as discovered */
-			v->visited = true;
+        if (!aux->visited) {
+			aux->visited = true;
 
-			vertex_get_value(v, &x);
+			vertex_get_value(aux, &x);
 			printf("%d -> ", x);
 
-            /* for all edges from v to w in G.adjacentEdges(v) do */
-            for(size_t j = 0; j < v->edges_no; j++) {
-				/* S.push(w) */
-				S[i++] = v->edges[j];
-				vertex_get_value(v->edges[j], &x);
-				printf("%d%s", x, (j < (v->edges_no - 1)) ? " -> " : "");
+            for(size_t j = 0; j < aux->edges_no; j++) {
+				stack_push(S, &(aux->edges[j]));
+				vertex_get_value(aux->edges[j], &x);
+				printf("%d%s", x, (j < (aux->edges_no - 1)) ? " -> " : "");
 			}
 			printf("\n");
 		}
 	}
 }
 
-void vertex_new(Vertex **x, Vertex_getter getter, Vertex_setter setter) {
+void vertex_new(Vertex **x, const Vertex_getter getter,
+		const Vertex_setter setter) {
 	(*x) = malloc(sizeof(Vertex));
 	(*x)->edges_no = 0;
 	(*x)->edges_alloc = 0;
@@ -193,20 +191,20 @@ void vertex_add_edge(Vertex *x, Vertex *edge) {
 	x->edges[x->edges_no++] = edge;
 }
 
-void vertex_get_value(Vertex *x, void *data) {
+void vertex_get_value(const Vertex *x, void *data) {
 	x->vertex_getter(x, data);
 }
 
-void vertex_set_value(Vertex *x, void *data) {
+void vertex_set_value(Vertex *x, const void *data) {
 	x->vertex_setter(x, data);
 }
 
 /* type specific functions */
-void vertex_getter(Vertex *x, void *data) {
+void vertex_getter(const Vertex *x, void *data) {
 	*(int *)data = *(int *)x->data;
 }
 
-void vertex_setter(Vertex *x, void *data) {
+void vertex_setter(Vertex *x, const void *data) {
 	int *i = malloc(sizeof(int));
 	*i = *(int *)data;
 	x->data = i;
