@@ -131,10 +131,7 @@ void graph_print_gv(const Graph *G) {
 }
 
 /* non-recursive Depth-First Search */
-/* TODO: implement a stack data structure */
 void graph_dfs(const Graph *G, const Vertex *v) {
-    /* let S be a stack */
-	/* Vertex **S = calloc(100, sizeof(Vertex *)); */
 	Stack *S;
 	Vertex *aux;
 	int x;
@@ -147,7 +144,6 @@ void graph_dfs(const Graph *G, const Vertex *v) {
 
         if (!aux->visited) {
 			aux->visited = true;
-
 			vertex_get_value(aux, &x);
 			printf("%d -> ", x);
 
