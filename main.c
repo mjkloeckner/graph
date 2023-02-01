@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "stack.h"
+#include "queue.h"
 
 #define GRAPH_INITIAL_ALLOC 5
 #define GRAPH_GROWTH_FACTOR 2
@@ -35,6 +36,7 @@ typedef struct {
 void graph_new(Graph **G);
 void graph_print(const Graph *G);
 void graph_print_gv(const Graph *G);
+void graph_bfs(const Graph *G, const Vertex *v);
 void graph_dfs(const Graph *G, const Vertex *v);
 void graph_add_vertex(Graph *G, Vertex *v);
 void graph_rm_vertex(Graph *G, Vertex *v);
@@ -139,22 +141,52 @@ void graph_dfs(const Graph *G, const Vertex *v) {
     stack_new(&S, sizeof(Vertex *));
 	stack_push(S, &v);
 
+	puts("strict digraph G {");
     while(S->len) {
 		stack_pop(S, &aux);
 
         if (!aux->visited) {
 			aux->visited = true;
 			vertex_get_value(aux, &x);
-			printf("%d -> ", x);
+			printf("    %d -> {", x);
 
             for(size_t j = 0; j < aux->edges_no; j++) {
 				stack_push(S, &(aux->edges[j]));
 				vertex_get_value(aux->edges[j], &x);
-				printf("%d%s", x, (j < (aux->edges_no - 1)) ? " -> " : "");
+				printf("%d%s", x, (j < (aux->edges_no - 1)) ? "," : "}");
 			}
 			printf("\n");
 		}
 	}
+	puts("}");
+}
+
+/* non-recursive Breadth-First Search */
+void graph_bfs(const Graph *G, const Vertex *v) {
+	Queue *Q;
+	Vertex *aux;
+	int x;
+
+	queue_new(&Q, sizeof(Vertex *));
+	queue_enqueue(Q, &v);
+
+	puts("strict digraph G {");
+    while(queue_is_empty(Q)) {
+		queue_dequeue(Q, &aux);
+		if(!aux->visited) {
+			aux->visited = true;
+			vertex_get_value(aux, &x);
+			printf("    %d -> {", x);
+			for(size_t j = 0; j < aux->edges_no; j++) {
+				vertex_get_value(aux->edges[j], &x);
+				printf("%d%s", x, (j < (aux->edges_no - 1)) ? "," : "}");
+				if(!aux->edges[j]->visited)
+					queue_enqueue(Q, &(aux->edges[j]));
+			}
+			printf("\n");
+		}
+	}
+	puts("}");
 }
 
 void vertex_new(Vertex **x, const Vertex_getter getter,
@@ -182,7 +214,7 @@ void vertex_add_edge(Vertex *x, Vertex *edge) {
 
 	else if (x->edges_no == x->edges_alloc)
 		x->edges = realloc(x->edges,
-				x->edges_alloc + (1 * VERTEX_EDGES_GROWTH_FACTOR));
+				(x->edges_alloc *= VERTEX_EDGES_GROWTH_FACTOR));
 
 	x->edges[x->edges_no++] = edge;
 }
@@ -242,7 +274,10 @@ int main (void) {
 
 	vertex_add_edge(graph->vertices[5], graph->vertices[3]);
 
-	graph_dfs(graph, graph->vertices[0]);
+	/* graph_bfs(graph, graph->vertices[0]); */
+	/* graph_dfs(graph, graph->vertices[0]); */
+	/* graph_print_gv(graph); */
+
 	graph_destroy(graph);
 	return 0;
 }
